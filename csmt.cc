@@ -11,11 +11,11 @@ namespace {
 
 int log2(int x) {
 	int deg = 0;
-	while ((1 << (deg + 1) < x)) ++deg;
+	while (((1 << (deg + 1)) <= x)) ++deg;
 	return deg;
 }
 
-int distance(int x, int y) {
+int Distance(int x, int y) {
 	return log2(x ^ y);
 }
 
@@ -55,8 +55,8 @@ std::unique_ptr<CSMT::Node> InsertImpl(std::unique_ptr<CSMT::Node>& node,
 			return MakeNode(new_leaf, node);
 		}
 	}
-	auto l_dist = distance(kvpair.key, GetKey(node->left));
-	auto r_dist = distance(kvpair.key, GetKey(node->right));
+	auto l_dist = Distance(kvpair.key, GetKey(node->left));
+	auto r_dist = Distance(kvpair.key, GetKey(node->right));
 	if (l_dist == r_dist) {
 		auto new_leaf = std::make_unique<CSMT::Node>(kvpair);
 		auto min_key = std::min(GetKey(node->left), GetKey(node->right));
@@ -65,14 +65,43 @@ std::unique_ptr<CSMT::Node> InsertImpl(std::unique_ptr<CSMT::Node>& node,
 		} else {
 			return MakeNode(node, new_leaf);
 		}
-	}
-	if (l_dist < r_dist) {
+	} else if (l_dist < r_dist) {
 		node->left = InsertImpl(node->left, kvpair);
 		return UpdateNode(node);
-	}
-	if (l_dist > r_dist) {
+	} else {
 		node->right = InsertImpl(node->right, kvpair);
 		return UpdateNode(node);
+	}
+}
+
+bool CheckForLeaf(std::unique_ptr<CSMT::Node>& left,
+                  std::unique_ptr<CSMT::Node>& right, int key) {
+	return (left->IsLeaf() && GetKey(left) == key) || (right->IsLeaf() && GetKey(right) == key);
+}
+
+std::unique_ptr<CSMT::Node> DeleteImpl(std::unique_ptr<CSMT::Node>& node,
+                                       int key) {
+	if (CheckForLeaf(node->left, node->right, key)) {
+		if (GetKey(node->left) == key) {
+			node = std::move(node->right);
+			return std::move(node);
+		} else {
+			node = std::move(node->left);
+			return std::move(node);
+		}
+	} else {
+		auto l_dist = Distance(key, GetKey(node->left));
+		auto r_dist = Distance(key, GetKey(node->right));
+		if (l_dist == r_dist) {
+			std::cerr << "key does not exist" << std::endl;
+			return std::move(node);
+		} else if (l_dist < r_dist) {
+			node->left = DeleteImpl(node->left, key);
+			return MakeNode(node->left, node->right);
+		} else {
+			node->right = DeleteImpl(node->right, key);
+			return MakeNode(node->left, node->right);
+		}
 	}
 }
 
@@ -92,17 +121,15 @@ void CSMT::Insert(const KVPair& kvpair) {
 }
 
 void CSMT::Log(std::ostream& out) {
-	std::function<void(const std::unique_ptr<CSMT::Node>& node, int)> log_impl =
-	[&out, &log_impl](const std::unique_ptr<CSMT::Node>& node, int depth) {
-		if (!node) return;
+	int depth = 0;
+	return Dfs([&out, &depth](const std::unique_ptr<Node>& node) {
 		for (int i = 0; i < depth; ++i) out << ' ';
 		out << GetKey(node) << std::endl;
-		log_impl(node->left, depth + 1);
-		log_impl(node->right, depth + 1);
-	};
-	log_impl(root, 0);
+	}, [&depth]() { depth++; }, [&depth]() { depth--; });
 }
 
-void CSMT::Delete(int key) {}
+void CSMT::Delete(int key) {
+	root = DeleteImpl(root, key);
+}
 
 std::vector<Data> CSMT::GetProof(int key) const { return {}; }
