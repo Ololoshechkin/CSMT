@@ -11,6 +11,8 @@ struct KVPair {
 
 class SMT {
   public:
+  	virtual ~SMT() = default;
+
 	virtual void Insert(const KVPair& kvpair) = 0;
 
 	virtual void Delete(int key) = 0;
