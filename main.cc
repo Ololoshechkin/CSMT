@@ -1,5 +1,6 @@
 #include <iostream>
 #include <memory>
+#include <set>
 #include "csmt.h"
 
 template <typename N>
@@ -9,7 +10,6 @@ int Key(const N& n) {
 
 int main() {
 	auto test = [](const std::vector<int>& order, const std::vector<int>& delete_order) {
-		std::cout << "________________________" << std::endl;
 		CSMT csmt;
 		for (int x : order) {
 			csmt.Insert({x, Data::kNull});
@@ -22,10 +22,21 @@ int main() {
 				std::cout << " EEEEEEEEE : " << Key(node->left) << ' ' << Key(node->right) << std::endl;
 			}
 		}, [] {}, [] {});
-		csmt.Log(std::cout);
-		std::cout << "________________________" << std::endl;
 	};
-	test({1, 123, 15, 123, 51, 6, 161, 9999, 16, 716, 8, 9}, {9999});
-	test({161, 1, 123, 51, 123, 6, 9, 16, 716, 8, 15}, {});
+	for (int i = 0; i < 10000; ++i) {
+		std::cout << i << std::endl;
+		std::vector<int> keys(1000 + (rand() % 25));
+		std::set<int> unique_keys;
+		for (int i = 0; i < keys.size(); ++i) {
+			int key = 1;
+			while (true) {
+				key = 1 + rand() % 2000;
+				if (!unique_keys.count(key)) break;
+			}
+			unique_keys.insert(key);
+			keys[i] = key;
+		}
+		test(keys, {});
+	}
 	return 0;
 }

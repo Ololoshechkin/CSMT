@@ -34,9 +34,9 @@ std::unique_ptr<CSMT::Node> MakeNode(std::unique_ptr<CSMT::Node>& left,
 	return std::make_unique<CSMT::Node>(KVPair{key, value}, std::move(left), std::move(right));
 }
 
-std::unique_ptr<CSMT::Node> UpdateNode(std::unique_ptr<CSMT::Node>& node) {
-	if (!node) return std::move(node);
-	return std::move(node = MakeNode(node->left, node->right));
+std::unique_ptr<CSMT::Node>& UpdateNode(std::unique_ptr<CSMT::Node>& node) {
+	if (!node) return node;
+	return node = MakeNode(node->left, node->right);
 }
 
 std::unique_ptr<CSMT::Node> InsertImpl(std::unique_ptr<CSMT::Node>& node,
@@ -67,10 +67,10 @@ std::unique_ptr<CSMT::Node> InsertImpl(std::unique_ptr<CSMT::Node>& node,
 		}
 	} else if (l_dist < r_dist) {
 		node->left = InsertImpl(node->left, kvpair);
-		return UpdateNode(node);
+		return std::move(UpdateNode(node));
 	} else {
 		node->right = InsertImpl(node->right, kvpair);
-		return UpdateNode(node);
+		return std::move(UpdateNode(node));
 	}
 }
 
