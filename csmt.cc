@@ -122,7 +122,7 @@ void CSMT::Insert(const KVPair& kvpair) {
 
 void CSMT::Log(std::ostream& out) {
 	int depth = 0;
-	return Dfs([&out, &depth](const std::unique_ptr<Node>& node) {
+	Dfs([&out, &depth](const std::unique_ptr<Node>& node) {
 		for (int i = 0; i < depth; ++i) out << ' ';
 		out << GetKey(node) << std::endl;
 	}, [&depth]() { depth++; }, [&depth]() { depth--; });
